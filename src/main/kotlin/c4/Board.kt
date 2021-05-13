@@ -1,7 +1,8 @@
 package c4
 
+import com.sun.org.apache.xpath.internal.operations.Bool
 import java.lang.StringBuilder
-import kotlin.math.sign
+import kotlin.math.abs
 
 object BoardConstants {
     const val columns = 7
@@ -35,6 +36,10 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
 
     constructor(b: Board) : this(){
         board = mutableListOf(*b.board.toTypedArray())
+    }
+
+    fun createNew() : Board{
+        return Board(this)
     }
 
     private fun validateBoard(){
@@ -74,6 +79,19 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
                 break
             }
         }
+    }
+
+    fun generateMoves() :List<Int>{
+        val moves : MutableList<Int> = mutableListOf()
+        for(i in  0..6){
+            if(validColumn(i)) moves.add(i)
+        }
+        return moves.toList()
+    }
+
+    fun validColumn(column: Int) : Boolean{
+        if(column in 0..6 && board[column] == Piece.EMPTY) return true
+        return false
     }
 
     override fun toString() : String{
@@ -188,65 +206,88 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
      */
     fun evaluate() : Int {
         val win = hasWon()
-        if(win == Piece.PLAYER) return 1000
-        else if(win == Piece.COMPUTER) return -1000
+        if(win == Piece.PLAYER) return 10000
+        else if(win == Piece.COMPUTER) return -10000
 
         //count possible 4's
 
-        //change board to list of nodes
-        val nodes : MutableList<Node> = mutableListOf()
-        board.forEach{
-            nodes.add(Node(it))
-        }
-
-
         //scoring
         var score = 0
-        for(i in (BoardConstants.boardLength - 1) downTo 0){
-            if(nodes[i].piece == Piece.EMPTY) continue
-
-            val directions = getDirectionsMatrix(i)
-            var tempScore = 0
-
-            directions.forEach {
-                tempScore += traverse(nodes, nodes[i].piece, i, it, 0)
+        //score available 4's
+        board.forEachIndexed { index, piece ->
+            if(piece != Piece.EMPTY) {
+                val directions = getDirectionsMatrix(index)
+                //score node
+                var nodeScore = 0
+                directions.forEach {
+                    nodeScore += traverse4(piece, index, it, 0, 1)
+                }
+                //add node score
+                if(piece == Piece.PLAYER) score += nodeScore
+                else score -= nodeScore
             }
-
-            when(nodes[i].piece) {
-                Piece.PLAYER -> score += tempScore
-                Piece.COMPUTER -> score -= tempScore
-                else -> score += 0
-            }
-            nodes[i].checked = true
         }
-
-
+        //score blocked 4's
+        board.forEachIndexed { index, piece ->
+            if(piece != Piece.EMPTY) {
+                val directions = getDirectionsMatrix(index)
+                //score node
+                var nodeScore = 0
+                directions.forEach {
+                    nodeScore += traverseBlocked(piece, index, it, 0, 0, blocked = false)
+                }
+                //add node score
+                if(piece == Piece.PLAYER) score -= nodeScore
+                else score += nodeScore
+            }
+        }
         return score
     }
 
-    private fun traverse(nodes : MutableList<Node>, desiredPiece: Piece, index : Int, direction : Int, depth: Int) : Int{
-        if(depth >= 10) {
-            println("Depth Exceeded")
+    private fun traverse4( desiredPiece: Piece, index : Int, direction : Int, depth: Int, pieces: Int) : Int{
+        if(depth >= 3){
+            if(placeable(index) || board[index] == desiredPiece) return 10 * pieces
             return 0
         }
-        if(nodes[index].checked) return 0
-        if(placeable(index)) return 2 + depth
-        if(nodes[index].piece == desiredPiece && checkDirection(index, direction)){
-            return 1 + traverse(nodes, desiredPiece, index + direction, direction, depth + 1)
+        if(checkDirection(index, direction)){
+            return when(board[index]){
+                desiredPiece -> traverse4(desiredPiece, index + direction, direction, depth + 1, pieces + 1)
+                Piece.EMPTY -> traverse4(desiredPiece, index + direction, direction, depth + 1, pieces)
+                else -> 0
+            }
         }
-        //condition of not desired piece
         return 0
     }
 
+    private fun traverseBlocked(startPiece: Piece, index: Int, direction: Int, depth: Int, pieces: Int, blocked : Boolean) : Int{
+        if(depth > 3){
+            return if (blocked && pieces > 1) {
+                pieces * pieces * 25
+            } else 0
+        }
+
+        if(checkDirection(index, direction)) {
+            return when (board[index]) {
+                startPiece -> traverseBlocked(startPiece, index + direction, direction, depth + 1, pieces + 1, blocked)
+                Piece.EMPTY -> traverseBlocked(startPiece, index + direction, direction, depth + 1, pieces, blocked)
+                else -> traverseBlocked(startPiece, index + direction, direction, depth + 1, pieces, true)
+            }
+        }
+
+        return traverseBlocked(startPiece, index, 0, 4, pieces, blocked)
+    }
+
     private fun checkDirection(i: Int, direction: Int) : Boolean{
+
         val c = BoardConstants.columns
+        if(i + direction !in 0 until BoardConstants.boardLength) return false
         return when{
             i % c == 0 -> when(direction){
                 -c + 1, 1, c + 1 -> false
                 else -> true
             }
             (i + 1) % c == 0 -> when(direction){
-                -c - 1, -1, c - 1 -> false
+                (-c - 1), -1, c - 1 -> false
                 else -> true
             }
             else -> true
@@ -275,10 +316,13 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
     }
 
     private fun placeable(index: Int) : Boolean{
-        if(board[index] != Piece.EMPTY) return false
-
+        if(board[index] != Piece.EMPTY) return true
         val check = index + BoardConstants.columns
-        return if(check > BoardConstants.boardLength) true else board[check] != Piece.EMPTY
+        return when{
+            check >= BoardConstants.boardLength -> true
+            check < 0 -> false
+            else -> board[check] == Piece.EMPTY
+        }
     }
 }
 
