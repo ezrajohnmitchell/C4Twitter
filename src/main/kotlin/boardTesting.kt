@@ -4,13 +4,13 @@ import c4.Piece
 fun main() {
     val board = Board(
         "eeeeeee",
-        "peeceee",
         "eeeeeee",
         "eeeeeee",
         "eeeeeee",
-        "eeepeee"
+        "eeeceee",
+        "eeccccp"
     )
     println(board)
-    println(board.getDirectionsMatrix(41))
+    println(board.evaluate())
 }
 

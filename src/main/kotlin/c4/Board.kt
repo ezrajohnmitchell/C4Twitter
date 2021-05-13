@@ -1,6 +1,7 @@
 package c4
 
 import java.lang.StringBuilder
+import kotlin.math.sign
 
 object BoardConstants {
     const val columns = 7
@@ -181,6 +182,7 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
         return Piece.EMPTY
     }
 
+
     /**
      * Evaluation function, computer is minimizer
      */
@@ -191,16 +193,72 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
 
         //count possible 4's
 
+        //change board to list of nodes
+        val nodes : MutableList<Node> = mutableListOf()
+        board.forEach{
+            nodes.add(Node(it))
+        }
 
 
+        //scoring
+        var score = 0
+        for(i in (BoardConstants.boardLength - 1) downTo 0){
+            if(nodes[i].piece == Piece.EMPTY) continue
 
+            val directions = getDirectionsMatrix(i)
+            var tempScore = 0
+
+            directions.forEach {
+                tempScore += traverse(nodes, nodes[i].piece, i, it, 0)
+            }
+
+            when(nodes[i].piece) {
+                Piece.PLAYER -> score += tempScore
+                Piece.COMPUTER -> score -= tempScore
+                else -> score += 0
+            }
+            nodes[i].checked = true
+        }
+
+
+        return score
+    }
+
+    private fun traverse(nodes : MutableList<Node>, desiredPiece: Piece, index : Int, direction : Int, depth: Int) : Int{
+        if(depth >= 10) {
+            println("Depth Exceeded")
+            return 0
+        }
+        if(nodes[index].checked) return 0
+        if(placeable(index)) return 2 + depth
+        if(nodes[index].piece == desiredPiece && checkDirection(index, direction)){
+            return 1 + traverse(nodes, desiredPiece, index + direction, direction, depth + 1)
+        }
+        //condition of not desired piece
         return 0
     }
+
+    private fun checkDirection(i: Int, direction: Int) : Boolean{
+        val c = BoardConstants.columns
+        return when{
+            i % c == 0 -> when(direction){
+                -c + 1, 1, c + 1 -> false
+                else -> true
+            }
+            (i + 1) % c == 0 -> when(direction){
+                -c - 1, -1, c - 1 -> false
+                else -> true
+            }
+            else -> true
+        }
+    }
+
+
 
     /**
      * Returns list of indices in all valid directions
      */
-    fun getDirectionsMatrix(i : Int) : List<Int>{
+    private fun getDirectionsMatrix(i : Int) : List<Int>{
         val c = BoardConstants.columns
 
         val tLeft = listOf(-c - 1, -1, c - 1)
@@ -213,12 +271,16 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
             else -> (tLeft + tCenter + tRight) as MutableList<Int>
         }
 
-        return tMatrix.map { it + i }.filter { it >= 0 && it < BoardConstants.boardLength }.sorted()
+        return tMatrix.filter { it + i >= 0 && it + i< BoardConstants.boardLength }.sorted()
     }
 
+    private fun placeable(index: Int) : Boolean{
+        if(board[index] != Piece.EMPTY) return false
+
+        val check = index + BoardConstants.columns
+        return if(check > BoardConstants.boardLength) true else board[check] != Piece.EMPTY
+    }
 }
 
 
-enum class Piece(val character: String) {
-    EMPTY("T"), PLAYER("P"), COMPUTER("C")
-}
+
