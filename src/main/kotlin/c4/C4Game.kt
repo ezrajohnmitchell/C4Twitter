@@ -1,7 +1,5 @@
 package c4
 
-import java.lang.StringBuilder
-
 class C4Game(private val board : Board = Board(),var isTerminal : Boolean= false) {
 
     /**
@@ -42,40 +40,38 @@ class C4Game(private val board : Board = Board(),var isTerminal : Boolean= false
         //min because computer is minimizer
         var min = 1000
         board.generateMoves().forEach {
-            val value = minimax(board.createNew().apply { addPiece(Piece.COMPUTER, it) }, 0, false)
-            if(value < min){
+            val value = minimax(board.createNew().apply { addPiece(Piece.COMPUTER, it) }, 0, true)
+            if(value <= min){
                 min = value
                 move = it
             }
         }
-
-        if(move != -1){
-            board.addPiece(Piece.COMPUTER, move)
-        }
+        board.addPiece(Piece.COMPUTER, move)
     }
 
     /**
      * Minimax algorithm, player is maximizer
      */
     private fun minimax(virtualBoard: Board, depth : Int, minimizing: Boolean) : Int{
+
         //base conditions
         when(virtualBoard.hasWon()){
-            Piece.PLAYER -> return 10000
-            Piece.COMPUTER -> return -10000
+            Piece.PLAYER -> return 1000
+            Piece.COMPUTER -> return -1000
             Piece.EMPTY -> Unit
         }
         //depth influences difficulty
-        if(depth >= 5) return virtualBoard.evaluate()
+        if(depth >= 4) return virtualBoard.evaluate()
 
         //TODO Add check to see if boardState has already been evaluated
         return if(minimizing){
-            var min = 10000
+            var min = 1000
             virtualBoard.generateMoves().forEach {
                 min = minimax(virtualBoard.createNew().apply { addPiece(Piece.PLAYER, it) }, depth + 1, false).coerceAtMost(min)
             }
             min
         } else{
-            var max = -10000
+            var max = -1000
             virtualBoard.generateMoves().forEach(){
                 max = minimax(virtualBoard.createNew().apply { addPiece(Piece.COMPUTER, it) }, depth + 1, true).coerceAtLeast(max)
             }

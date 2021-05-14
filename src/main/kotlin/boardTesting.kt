@@ -10,14 +10,16 @@ fun main() {
     }
 //    val board = Board()
 //
-//    board.addPiece(Piece.COMPUTER, 4)
 //    board.addPiece(Piece.PLAYER, 4)
-//    board.addPiece(Piece.COMPUTER, 5)
 //    board.addPiece(Piece.PLAYER, 5)
-//    board.addPiece(Piece.COMPUTER, 6)
 //    board.addPiece(Piece.PLAYER, 6)
+//    board.addPiece(Piece.COMPUTER, 3)
+//    board.addPiece(Piece.COMPUTER, 3)
+//    board.addPiece(Piece.COMPUTER, 2)
+//
 //
 //    println(board)
+//    println(board.placeable(28))
 //    println(board.evaluate())
 }
 

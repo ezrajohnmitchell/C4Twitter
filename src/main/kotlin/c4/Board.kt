@@ -1,6 +1,5 @@
 package c4
 
-import com.sun.org.apache.xpath.internal.operations.Bool
 import java.lang.StringBuilder
 import kotlin.math.abs
 
@@ -83,13 +82,13 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
 
     fun generateMoves() :List<Int>{
         val moves : MutableList<Int> = mutableListOf()
-        for(i in  0..6){
+        for(i in  1..7){
             if(validColumn(i)) moves.add(i)
         }
         return moves.toList()
     }
 
-    fun validColumn(column: Int) : Boolean{
+    private fun validColumn(column: Int) : Boolean{
         if(column in 0..6 && board[column] == Piece.EMPTY) return true
         return false
     }
@@ -206,75 +205,90 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
      */
     fun evaluate() : Int {
         val win = hasWon()
-        if(win == Piece.PLAYER) return 10000
-        else if(win == Piece.COMPUTER) return -10000
-
-        //count possible 4's
+        if(win == Piece.PLAYER) return 1000
+        else if(win == Piece.COMPUTER) return -1000
 
         //scoring
         var score = 0
-        //score available 4's
-        board.forEachIndexed { index, piece ->
-            if(piece != Piece.EMPTY) {
-                val directions = getDirectionsMatrix(index)
-                //score node
-                var nodeScore = 0
-                directions.forEach {
-                    nodeScore += traverse4(piece, index, it, 0, 1)
-                }
-                //add node score
-                if(piece == Piece.PLAYER) score += nodeScore
-                else score -= nodeScore
-            }
+
+        //run countLine in all directions
+        //horizontal + down right lower half start nodes
+        for(i in 0 until BoardConstants.boardLength step BoardConstants.columns){
+            //horizontal
+            score += countLine(i, 1, Piece.PLAYER, Piece.COMPUTER)
+            score -= countLine(i, 1, Piece.COMPUTER, Piece.PLAYER)
+            //down right
+            score += countLine(i, BoardConstants.columns + 1, Piece.PLAYER, Piece.COMPUTER)
+            score -= countLine(i, BoardConstants.columns + 1, Piece.COMPUTER, Piece.PLAYER)
+            //down left, transform to other side of board
+            score += countLine(i + BoardConstants.columns - 1, BoardConstants.columns - 1, Piece.PLAYER, Piece.COMPUTER)
+            score -= countLine(i + BoardConstants.columns - 1, BoardConstants.columns - 1, Piece.COMPUTER, Piece.PLAYER)
         }
-        //score blocked 4's
-        board.forEachIndexed { index, piece ->
-            if(piece != Piece.EMPTY) {
-                val directions = getDirectionsMatrix(index)
-                //score node
-                var nodeScore = 0
-                directions.forEach {
-                    nodeScore += traverseBlocked(piece, index, it, 0, 0, blocked = false)
-                }
-                //add node score
-                if(piece == Piece.PLAYER) score -= nodeScore
-                else score += nodeScore
-            }
+        //vertical + down right upper half start nodes
+        for(i in 0 until BoardConstants.columns){
+            //vertical
+//            score += countLine(i, BoardConstants.columns, Piece.PLAYER, Piece.COMPUTER)
+//            score -= countLine(i, BoardConstants.columns, Piece.COMPUTER, Piece.PLAYER)
+            //down right
+            score += countLine(i, BoardConstants.columns + 1, Piece.PLAYER, Piece.COMPUTER)
+            score -= countLine(i, BoardConstants.columns + 1, Piece.COMPUTER, Piece.PLAYER)
+            //down left
+            score += countLine(i, BoardConstants.columns - 1, Piece.PLAYER, Piece.COMPUTER)
+            score -= countLine(i, BoardConstants.columns - 1, Piece.COMPUTER, Piece.PLAYER)
         }
+
         return score
     }
 
-    private fun traverse4( desiredPiece: Piece, index : Int, direction : Int, depth: Int, pieces: Int) : Int{
-        if(depth >= 3){
-            if(placeable(index) || board[index] == desiredPiece) return 10 * pieces
-            return 0
+    /**
+     * Returns score of
+     */
+    private fun countLine(start: Int, direction: Int, scoringPiece: Piece, blockingPiece: Piece) : Int {
+        //construct row and parallel index array
+        val row : MutableList<Piece> = mutableListOf()
+        val rowI : MutableList<Int> = mutableListOf()
+
+        var index = start
+
+        var finished = false
+        while(!finished){
+            row.add(board[index])
+            rowI.add(index)
+            if(checkDirection(index, direction)) index += direction
+            else finished = true
         }
-        if(checkDirection(index, direction)){
-            return when(board[index]){
-                desiredPiece -> traverse4(desiredPiece, index + direction, direction, depth + 1, pieces + 1)
-                Piece.EMPTY -> traverse4(desiredPiece, index + direction, direction, depth + 1, pieces)
-                else -> 0
+
+        var score = 0
+
+        for(i in 0 until (row.size - 3)){
+            //construct subRow for every sequential group of 4
+            val subRow = row.subList(i, i + 4)
+            val subRowI = rowI.subList(i, i + 4)
+
+            var subScore = 0
+            //score subRow
+
+            //1 point if not blocked
+            //blocked if not all placeable or other piece exists
+            var blocked : Boolean
+            blocked = subRow.contains(blockingPiece)
+
+            for(j in 0 until subRowI.size){
+                if(!placeable(subRowI[j])) blocked = true
             }
-        }
-        return 0
-    }
 
-    private fun traverseBlocked(startPiece: Piece, index: Int, direction: Int, depth: Int, pieces: Int, blocked : Boolean) : Int{
-        if(depth > 3){
-            return if (blocked && pieces > 1) {
-                pieces * pieces * 25
-            } else 0
-        }
-
-        if(checkDirection(index, direction)) {
-            return when (board[index]) {
-                startPiece -> traverseBlocked(startPiece, index + direction, direction, depth + 1, pieces + 1, blocked)
-                Piece.EMPTY -> traverseBlocked(startPiece, index + direction, direction, depth + 1, pieces, blocked)
-                else -> traverseBlocked(startPiece, index + direction, direction, depth + 1, pieces, true)
+            //4 points if three in a row
+            if(!blocked) {
+                subScore = subRow.filter { it == scoringPiece }.count()
+                subScore = when(subScore){
+                    3 -> 10
+                    else -> subScore
+                }
             }
+            score += subScore
         }
 
-        return traverseBlocked(startPiece, index, 0, 4, pieces, blocked)
+        return score
     }
 
     private fun checkDirection(i: Int, direction: Int) : Boolean{
@@ -282,11 +296,11 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
         val c = BoardConstants.columns
         if(i + direction !in 0 until BoardConstants.boardLength) return false
         return when{
-            i % c == 0 -> when(direction){
+            (i + 1) % c == 0 -> when(direction){
                 -c + 1, 1, c + 1 -> false
                 else -> true
             }
-            (i + 1) % c == 0 -> when(direction){
+            i % c == 0 -> when(direction){
                 (-c - 1), -1, c - 1 -> false
                 else -> true
             }
@@ -315,13 +329,12 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
         return tMatrix.filter { it + i >= 0 && it + i< BoardConstants.boardLength }.sorted()
     }
 
-    private fun placeable(index: Int) : Boolean{
-        if(board[index] != Piece.EMPTY) return true
+     fun placeable(index: Int) : Boolean{
         val check = index + BoardConstants.columns
         return when{
             check >= BoardConstants.boardLength -> true
             check < 0 -> false
-            else -> board[check] == Piece.EMPTY
+            else -> board[check] != Piece.EMPTY
         }
     }
 }
