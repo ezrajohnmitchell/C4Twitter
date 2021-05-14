@@ -1,5 +1,7 @@
 package c4
 
+import kotlin.math.sign
+
 class C4Game(private val board : Board = Board(),var isTerminal : Boolean= false) {
 
     /**
@@ -56,12 +58,15 @@ class C4Game(private val board : Board = Board(),var isTerminal : Boolean= false
 
         //base conditions
         when(virtualBoard.hasWon()){
-            Piece.PLAYER -> return 1000
-            Piece.COMPUTER -> return -1000
+            Piece.PLAYER -> return 1000 - depth
+            Piece.COMPUTER -> return -1000 + depth
             Piece.EMPTY -> Unit
         }
         //depth influences difficulty
-        if(depth >= 4) return virtualBoard.evaluate()
+        if(depth >= 4) {
+            val score = virtualBoard.evaluate()
+            return score + (depth + if (score < 0) 1 else -1)
+        }
 
         //TODO Add check to see if boardState has already been evaluated
         return if(minimizing){

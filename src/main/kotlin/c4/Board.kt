@@ -227,8 +227,8 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
         //vertical + down right upper half start nodes
         for(i in 0 until BoardConstants.columns){
             //vertical
-//            score += countLine(i, BoardConstants.columns, Piece.PLAYER, Piece.COMPUTER)
-//            score -= countLine(i, BoardConstants.columns, Piece.COMPUTER, Piece.PLAYER)
+            score += countLine(i, BoardConstants.columns, Piece.PLAYER, Piece.COMPUTER)
+            score -= countLine(i, BoardConstants.columns, Piece.COMPUTER, Piece.PLAYER)
             //down right
             score += countLine(i, BoardConstants.columns + 1, Piece.PLAYER, Piece.COMPUTER)
             score -= countLine(i, BoardConstants.columns + 1, Piece.COMPUTER, Piece.PLAYER)
