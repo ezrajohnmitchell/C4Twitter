@@ -8,12 +8,14 @@ plugins {
 group = "me.zdidd"
 version = "1.0-SNAPSHOT"
 
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
     testImplementation(kotlin("test-junit"))
+    implementation("org.twitter4j:twitter4j-core:4.0.7")
 }
 
 tasks.test {
@@ -25,5 +27,6 @@ tasks.withType<KotlinCompile>() {
 }
 
 application {
-    mainClassName = "MainKt"
+    mainClass.set("src.main.kotlin.Main")
 }
+

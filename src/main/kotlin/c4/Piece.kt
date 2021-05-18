@@ -1,5 +1,5 @@
 package c4
 
 enum class Piece( val character: String) {
-    EMPTY("."), PLAYER("P"), COMPUTER("C")
+    EMPTY("⚪"), PLAYER("⚫"), COMPUTER("\uD83D\uDD34")
 }

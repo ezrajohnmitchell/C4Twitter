@@ -1,15 +1,17 @@
 package c4
 
 import java.lang.StringBuilder
-import kotlin.math.abs
+import java.text.SimpleDateFormat
+import java.util.*
 
 object BoardConstants {
     const val columns = 7
     const val rows = columns - 1
     const val boardLength = columns * rows
+    const val suffix = "Come play connect 4! To vote on the next move put \"!vote#\" in a reply to this tweet. # should be between 1 and 7. ⚫ is twitter (only latest tweet is active)"
 }
 
-data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boardLength) {Piece.EMPTY}){
+data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boardLength) { Piece.EMPTY }){
 
     /** 7 columns, 6 rows
      * Accepted characters E/e empty, P/p player, C/c computer, anything else defaults to empty.
@@ -37,7 +39,7 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
         board = mutableListOf(*b.board.toTypedArray())
     }
 
-    fun createNew() : Board{
+    fun createNew() : Board {
         return Board(this)
     }
 
@@ -80,6 +82,10 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
         }
     }
 
+    fun reset(){
+        board.replaceAll { Piece.EMPTY }
+    }
+
     fun generateMoves() :List<Int>{
         val moves : MutableList<Int> = mutableListOf()
         for(i in  1..7){
@@ -95,11 +101,20 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
 
     override fun toString() : String{
         val sb = StringBuilder()
+
         for(i in board.indices){
-            sb.append(board[i].character + " ")
+            sb.append(board[i].character)
             if ((i + 1)% BoardConstants.columns == 0) sb.append("\n")
         }
-
+        when(hasWon()){
+            Piece.PLAYER -> sb.append("Twitter Wins!")
+            Piece.COMPUTER -> sb.append("The bot wins!")
+            else -> sb.append(BoardConstants.suffix)
+        }
+        val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
+        val currentDate = sdf.format(Date())
+        sb.append("\n")
+        sb.append(currentDate)
         return sb.toString()
     }
 
@@ -182,7 +197,11 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
         return Piece.EMPTY
     }
 
-    private fun iDiagonal(start: Int, iterations: Int, diagonalStep : Int) : Piece{
+    fun isDraw() : Boolean{
+        return hasWon() == Piece.EMPTY && board.filter { it != Piece.EMPTY }.size < board.size
+    }
+
+    private fun iDiagonal(start: Int, iterations: Int, diagonalStep : Int) : Piece {
 
         var inRow = 0
         var lastPiece = Piece.EMPTY

@@ -1,13 +1,11 @@
-import c4.Board
 import c4.C4Game
-import c4.Piece
 
 fun main() {
-    val game = C4Game()
-    println(game.toString())
-    while (!game.isTerminal) {
-        println(game.runTurn(readLine()!!.toInt()))
-    }
+//    val game = C4Game()
+//    println(game.toString())
+//    while (!game.isTerminal) {
+//        println(game.runTurn(readLine()!!.toInt()))
+//    }
 //    val board = Board()
 //
 //    board.addPiece(Piece.PLAYER, 4)
@@ -21,5 +19,6 @@ fun main() {
 //    println(board)
 //    println(board.placeable(28))
 //    println(board.evaluate())
+    println("!vote4"["!vote4".indexOf("!vote") + 5])
 }
 

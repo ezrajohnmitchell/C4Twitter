@@ -1,8 +1,6 @@
 package c4
 
-import kotlin.math.sign
-
-class C4Game(private val board : Board = Board(),var isTerminal : Boolean= false) {
+class C4Game(private val board : Board = Board(), var isTerminal : Boolean= false) {
 
     /**
      * Input player column (1-7), updates player turn and runs ai turn, choosing a full row will result in loss of a turn
@@ -21,17 +19,7 @@ class C4Game(private val board : Board = Board(),var isTerminal : Boolean= false
         //do computer turn
         minimaxHelper()
 
-        return when (board.hasWon()) {
-            Piece.PLAYER -> {
-                isTerminal = true
-                "Player wins"
-            }
-            Piece.COMPUTER -> {
-                isTerminal = true
-                "Computer wins"
-            }
-            else -> board.toString()
-        }
+        return board.toString()
     }
 
     /**
@@ -77,7 +65,7 @@ class C4Game(private val board : Board = Board(),var isTerminal : Boolean= false
             min
         } else{
             var max = -1000
-            virtualBoard.generateMoves().forEach(){
+            virtualBoard.generateMoves().forEach {
                 max = minimax(virtualBoard.createNew().apply { addPiece(Piece.COMPUTER, it) }, depth + 1, true).coerceAtLeast(max)
             }
             max
