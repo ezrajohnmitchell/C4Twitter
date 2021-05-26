@@ -19,6 +19,5 @@ fun main() {
 //    println(board)
 //    println(board.placeable(28))
 //    println(board.evaluate())
-    println("!vote4"["!vote4".indexOf("!vote") + 5])
 }
 
