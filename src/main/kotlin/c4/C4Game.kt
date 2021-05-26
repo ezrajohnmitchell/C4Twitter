@@ -30,7 +30,7 @@ class C4Game(private val board : Board = Board(), var isTerminal : Boolean= fals
         //min because computer is minimizer
         var min = 1000
         board.generateMoves().forEach {
-            val value = minimax(board.createNew().apply { addPiece(Piece.COMPUTER, it) }, 0, true)
+            val value = minimax(board.createNew().apply { addPiece(Piece.COMPUTER, it) }, 0, false)
             if(value <= min){
                 min = value
                 move = it

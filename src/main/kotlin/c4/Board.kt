@@ -246,8 +246,8 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
         //vertical + down right upper half start nodes
         for(i in 0 until BoardConstants.columns){
             //vertical
-            score += countLine(i, BoardConstants.columns, Piece.PLAYER, Piece.COMPUTER)
-            score -= countLine(i, BoardConstants.columns, Piece.COMPUTER, Piece.PLAYER)
+            //score += countLine(i, BoardConstants.columns, Piece.PLAYER, Piece.COMPUTER)
+            //score -= countLine(i, BoardConstants.columns, Piece.COMPUTER, Piece.PLAYER)
             //down right
             score += countLine(i, BoardConstants.columns + 1, Piece.PLAYER, Piece.COMPUTER)
             score -= countLine(i, BoardConstants.columns + 1, Piece.COMPUTER, Piece.PLAYER)
@@ -268,7 +268,6 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
         val rowI : MutableList<Int> = mutableListOf()
 
         var index = start
-
         var finished = false
         while(!finished){
             row.add(board[index])
@@ -277,8 +276,8 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
             else finished = true
         }
 
-        var score = 0
 
+        var score = 0
         for(i in 0 until (row.size - 3)){
             //construct subRow for every sequential group of 4
             val subRow = row.subList(i, i + 4)
@@ -293,7 +292,7 @@ data class Board(var board : MutableList<Piece> = MutableList(BoardConstants.boa
             blocked = subRow.contains(blockingPiece)
 
             for(j in 0 until subRowI.size){
-                if(!placeable(subRowI[j])) blocked = true
+                if(subRow[j] == Piece.EMPTY && !placeable(subRowI[j])) blocked = true
             }
 
             //4 points if three in a row

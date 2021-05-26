@@ -27,6 +27,6 @@ tasks.withType<KotlinCompile>() {
 }
 
 application {
-    mainClass.set("src.main.kotlin.Main")
+    mainClass.set("MainKT")
 }
 
